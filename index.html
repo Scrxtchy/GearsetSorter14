@@ -1,0 +1,90 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js" integrity="sha512-csNcFYJniKjJxRWRV1R7fvnXrycHP6qDR21mgz1ZP55xY5d+aHLfo9/FcGDQLfn2IfngbAHd8LdfsagcCqgTcQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js" integrity="sha256-ipiJrswvAR4VAx/th+6zWsdeYmVae0iJuiR+6OqHJHQ=" crossorigin="anonymous"></script>
+
+<h1>Basic Gearset Manager</h1>
+This is incredibly lazy right now<br>
+But it works.<br>
+
+<h3>Instructions</h3>
+<ol>
+	<li><strong>BACKUP YOUR GEARSET.DAT FILE JUST IN CASE</strong></li>
+	<li>Click the browse button below and locate your appropriate GEARSET.DAT</li>
+	<ul>
+		<li>On windows these are in <pre>%USERPROFILE%\Documents\My Games\FINAL FANTASY XIV - A Realm Reborn\FFXIV_CHR...</pre></li>
+		<li>If you have multiple characters, you will need to find the write character data that you want to configure<br>One helpful method of doing this would be to look at the Time Modified of its appropriate files, if you're working on it now, it should have the current time on it</li>
+		<li><strong>Files are not uploaded anywhere</strong>, modifications are made with the security of your browser</li>
+	</ul>
+	<li>Rearrage the list below to reorder gearsets</li>
+	<li>Click Save below to replace your existing HOTBAR.DAT with the new file</li>
+	<li>Login to your character again and see changes made</li>
+</ol>
+
+<input type="file" id="input"><button id="save">Save</button>
+
+<ul id="gearset">
+</ul>
+
+
+<script>
+	var contents
+	var gsarr = []
+
+	const inputElement = document.getElementById("input");
+	const ul = document.getElementById("gearset")
+	inputElement.addEventListener("change", handleFiles, false);
+
+	function xorthisshit(el, ind, ar){
+		ar[ind] = el ^ 0x73
+	}
+
+	function handleFiles() {
+		ul.replaceChildren()
+		const read = new FileReader();
+		read.onload = function(e){
+
+			const aB = e.target.result;
+			contents = new Uint8Array(aB)
+			contents.forEach(xorthisshit)
+
+			for (i=22, l = 0; l < 101; i=i+448, l=l+1){
+				const gearset = contents.slice(i, i+447)
+				gsarr.push(gearset)
+				li = document.createElement("li");
+				li.setAttribute("gs-slot", l)
+				if (gearset[0] == 0){
+					const em = document.createElement("em")
+					em.appendChild(document.createTextNode("[Empty Gearset]"))
+					li.appendChild(em);
+				} else {
+					li.appendChild(document.createTextNode(new TextDecoder().decode(gearset.slice(0, gearset.indexOf(0)))));
+				}
+				ul.appendChild(li);
+
+			}
+
+			const sortable = Sortable.create(ul);
+		}
+		read.readAsArrayBuffer(this.files[0])
+	}
+
+	document.getElementById("save").addEventListener("click", () => {
+		
+		const newdat = contents.slice(0)
+		for (i=22, l = 0; l < 101; i=i+448, l=l+1){
+			const num =  ul.children[l].getAttribute("gs-slot")
+
+			for (u = 0; u < newdat.length; u++){
+				newdat[22 + (l*448) + u] = gsarr[num][u]
+			}
+
+			const gearset = newdat.slice(i, i+447)
+		}
+		newdat.forEach(xorthisshit)
+
+		const blob = new Blob([newdat], {type:"application/octet-stream"})
+		saveAs(blob, "GEARSET.DAT")
+	})
+
+
+</script>
