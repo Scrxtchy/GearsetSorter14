@@ -14,13 +14,18 @@ But it works.<br>
 		<li>On windows these are in <pre>%USERPROFILE%\Documents\My Games\FINAL FANTASY XIV - A Realm Reborn\FFXIV_CHR...</pre></li>
 		<li>If you have multiple characters, you will need to find the write character data that you want to configure<br>One helpful method of doing this would be to look at the Time Modified of its appropriate files, if you're working on it now, it should have the current time on it</li>
 		<li><strong>Files are not uploaded anywhere</strong>, modifications are made with the security of your browser</li>
+		<li><em>A HOTBAR.DAT file can also be selected (optional), as re-arranging gearsets externally will cause the hotbar entries to link to the new placements</em></li>
 	</ul>
 	<li>Rearrage the list below to reorder gearsets</li>
-	<li>Click Save below to replace your existing HOTBAR.DAT with the new file</li>
+	<li>Click Save below to replace your existing GEARSET.DAT with the new file</li>
 	<li>Login to your character again and see changes made</li>
+	<ul>
+		<li>Like logging in on another device, be careful as the game has remembered you logging out with gear not the same as on active gearset, <strong>be careful not to overwrite your equiped items over the active gearset</strong></li>
+	</ul>
 </ol>
 
-<input type="file" id="input"><button id="save">Save</button>
+GEARSET.DAT: <input type="file" id="input"><button id="save">Save</button></br>
+ HOTBAR.DAT: <input type="file" id="inputhb">
 
 <ul id="gearset">
 </ul>
@@ -84,6 +89,24 @@ But it works.<br>
 
 		const blob = new Blob([newdat], {type:"application/octet-stream"})
 		saveAs(blob, "GEARSET.DAT")
+
+		if (document.getElementById("inputhb").files.length === 1){
+			const read = new FileReader();
+			read.onload = function(e){
+				const aB = e.target.result;
+				const contents = new Uint8Array(aB)
+				const ularr = [...ul.childNodes]
+				for (i=7; i < contents.length; i=i+8){
+					if (contents[i] == 0x3E) {
+						contents[i-7] = (ularr.findIndex(li=> li === ul.querySelector(`li[gs-slot='${contents[i-7] ^ 0x31}']`)) ^ 0x31)
+					}
+				}
+				const blob = new Blob([contents], {type:"application/octet-stream"})
+				saveAs(blob, "HOTBAR.DAT")
+			}
+			read.readAsArrayBuffer(document.getElementById("inputhb").files[0])	
+		}
+
 	})
 
 
